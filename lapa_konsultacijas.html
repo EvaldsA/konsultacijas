@@ -1,0 +1,121 @@
+<!doctype html>
+<html lang="lv">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Konsultācijas — MVP prototips</title>
+  <style>
+    :root{ --gap:12px; --accent:#2563eb; }
+    body{ margin:0; font-family:system-ui,Segoe UI,Roboto,Arial; background:#f5f7fb; }
+    header{ background:white; padding:16px 24px; display:flex; align-items:center; gap:12px; box-shadow:0 1px 0 rgba(0,0,0,0.06); }
+    main{ display:flex; gap:16px; padding:18px; }
+    .filters{ width:280px; background:white; padding:12px; border-radius:8px; box-shadow:0 6px 18px rgba(2,6,23,0.06); height:calc(100vh - 100px); overflow:auto; }
+    .results{ flex:1; }
+    .toolbar{ display:flex; gap:12px; align-items:center; margin-bottom:12px; }
+    .search{ flex:1; padding:8px 12px; border-radius:8px; border:1px solid #e6eefc; }
+    .card{ background:white; padding:12px; border-radius:8px; margin-bottom:12px; display:flex; gap:12px; align-items:flex-start; box-shadow:0 2px 8px rgba(2,6,23,0.04); }
+    .avatar{ width:84px; height:84px; border-radius:8px; background:#eef2ff; flex-shrink:0; display:flex; align-items:center; justify-content:center; color:var(--accent); font-weight:700; }
+    .meta{ font-size:13px; color:#444; }
+    .actions{ margin-left:auto; display:flex; flex-direction:column; gap:8px; }
+    button.primary{ background:var(--accent); color:white; border:none; padding:8px 12px; border-radius:8px; cursor:pointer; }
+    button.ghost{ background:transparent; border:1px solid #e6eefc; padding:6px 8px; border-radius:6px; cursor:pointer; }
+    footer{ padding:12px; text-align:center; color:#777; font-size:13px; }
+  </style>
+</head>
+<body>
+  <header>
+    <h1 style="margin:0;font-size:18px">Konsultācijas — atrast skolotāju</h1>
+    <div style="margin-left:auto; display:flex; gap:8px;">
+      <button class="ghost">Reģistrēties</button>
+      <button class="primary">Pieteikties</button>
+    </div>
+  </header>
+
+  <main>
+    <aside class="filters" aria-label="Filtri">
+      <h3>Filtri</h3>
+      <label class="meta">Priekšmets
+        <select id="fSubject" style="width:100%;padding:8px;margin-top:6px;border-radius:6px;">
+          <option value="">Visi</option>
+          <option>Matemātika</option>
+          <option>Latviešu valoda</option>
+          <option>Angļu valoda</option>
+        </select>
+      </label>
+
+      <label class="meta" style="margin-top:10px;">Cena (maks)</label>
+      <input type="range" id="fPrice" min="0" max="100" value="50" style="width:100%">
+
+      <label class="meta" style="margin-top:10px;">Konsultācijas veids</label>
+      <div style="display:flex;gap:8px;margin-top:6px;">
+        <label><input type="checkbox" id="fRemote"> Attālināti</label>
+        <label><input type="checkbox" id="fInperson"> Klātienē</label>
+      </div>
+
+      <h4 style="margin-top:18px">Papildus</h4>
+      <label class="meta">Pieredze (gadi)
+        <select id="fExp" style="width:100%;padding:8px;margin-top:6px;border-radius:6px;">
+          <option value="">—</option>
+          <option value="1">1+</option>
+          <option value="3">3+</option>
+          <option value="5">5+</option>
+        </select>
+      </label>
+    </aside>
+
+    <section class="results">
+      <div class="toolbar">
+        <input class="search" id="q" placeholder="Meklēt pēc skolotāja vai priekšmeta...">
+        <button class="ghost" id="clear">Notīrīt</button>
+      </div>
+
+      <div id="list">
+        <!-- dinamiskas skolotāju kartes -->
+      </div>
+    </section>
+  </main>
+
+  <footer>
+    MVP prototips — rezervēšanas plūsma, kalendārs un profili jāpievieno backend
+  </footer>
+
+  <script>
+    // Vienkāršs statisks piemērs — aizstāj ar reālu API
+    const demo = [
+      {name:'Inese B.', subj:'Matemātika', price:25, exp:8, remote:true, place:'Rīga'},
+      {name:'Jānis K.', subj:'Angļu valoda', price:18, exp:4, remote:true, place:'Jelgava'},
+      {name:'Maija P.', subj:'Latviešu valoda', price:15, exp:6, remote:false, place:'Rīga'}
+    ];
+    const list = document.getElementById('list');
+    function render(data){
+      list.innerHTML = '';
+      data.forEach(t=>{
+        const el = document.createElement('div'); el.className='card';
+        el.innerHTML = `<div class="avatar">${t.name.split(' ')[0][0]||'S'}</div>
+          <div>
+            <div style="font-weight:600">${t.name}</div>
+            <div class="meta">${t.subj} · ${t.exp} gadi · ${t.place}</div>
+            <div style="margin-top:8px;color:#333">Cena: €${t.price}/st</div>
+          </div>
+          <div class="actions">
+            <button class="primary" onclick="openProfile('${t.name}')">Skatīt / Rezervēt</button>
+            <button class="ghost" onclick="contact('${t.name}')">Ziņot</button>
+          </div>`;
+        list.appendChild(el);
+      });
+    }
+    function openProfile(name){ alert('Atvērt profilu: '+name); }
+    function contact(name){ alert('Sūtīt ziņu skolotājam: '+name); }
+    render(demo);
+
+    // filtri — pamata
+    document.getElementById('q').addEventListener('input', e=>{
+      const q = e.target.value.toLowerCase();
+      render(demo.filter(d=> (d.name+d.subj).toLowerCase().includes(q)));
+    });
+    document.getElementById('clear').addEventListener('click', ()=>{
+      document.getElementById('q').value=''; render(demo);
+    });
+  </script>
+</body>
+</html>
