@@ -4,20 +4,24 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Konsultācijas — MVP prototips</title>
+  <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap" rel="stylesheet">
   <style>
-    :root{ --gap:12px; --accent:#2563eb; }
-    body{ margin:0; font-family:system-ui,Segoe UI,Roboto,Arial; background:#f5f7fb; }
-    header{ background:white; padding:16px 24px; display:flex; align-items:center; gap:12px; box-shadow:0 1px 0 rgba(0,0,0,0.06); }
+    :root{ --gap:12px; --accent:#4CAF50; --background:#f5f7fb; --text-color:#333; }
+    body{ margin:0; font-family:'Roboto', sans-serif; background:var(--background); }
+    header{ background:white; padding:16px 24px; display:flex; align-items:center; gap:12px; box-shadow:0 1px 0 rgba(0,0,0,0.1); }
+    h1{ color: var(--accent); }
     main{ display:flex; gap:16px; padding:18px; flex-wrap: wrap; }
-    .filters{ width:280px; background:white; padding:12px; border-radius:8px; box-shadow:0 6px 18px rgba(2,6,23,0.06); height:calc(100vh - 100px); overflow:auto; }
+    .filters{ width:280px; background:white; padding:12px; border-radius:8px; box-shadow:0 6px 18px rgba(0,0,0,0.1); height:calc(100vh - 100px); overflow:auto; }
     .results{ flex:1; min-width:300px; }
     .toolbar{ display:flex; gap:12px; align-items:center; margin-bottom:12px; }
     .search{ flex:1; padding:8px 12px; border-radius:8px; border:1px solid #e6eefc; }
-    .card{ background:white; padding:12px; border-radius:8px; margin-bottom:12px; display:flex; gap:12px; align-items:flex-start; box-shadow:0 2px 8px rgba(2,6,23,0.04); }
+    .card{ background:white; padding:12px; border-radius:8px; margin-bottom:12px; display:flex; gap:12px; align-items:flex-start; box-shadow:0 2px 8px rgba(0,0,0,0.1); transition: transform 0.2s; }
+    .card:hover{ transform: translateY(-2px); }
     .avatar{ width:84px; height:84px; border-radius:8px; background:#eef2ff; flex-shrink:0; display:flex; align-items:center; justify-content:center; color:var(--accent); font-weight:700; }
-    .meta{ font-size:13px; color:#444; }
+    .meta{ font-size:13px; color:var(--text-color); }
     .actions{ margin-left:auto; display:flex; flex-direction:column; gap:8px; }
-    button.primary{ background:var(--accent); color:white; border:none; padding:8px 12px; border-radius:8px; cursor:pointer; }
+    button.primary{ background:var(--accent); color:white; border:none; padding:8px 12px; border-radius:8px; cursor:pointer; transition: background 0.3s; }
+    button.primary:hover{ background:#45a049; }
     button.ghost{ background:transparent; border:1px solid #e6eefc; padding:6px 8px; border-radius:6px; cursor:pointer; }
     footer{ padding:12px; text-align:center; color:#777; font-size:13px; }
 
@@ -33,7 +37,7 @@
 </head>
 <body>
   <header>
-    <h1 style="margin:0;font-size:18px">Konsultācijas — atrast skolotāju</h1>
+    <h1 style="margin:0;font-size:24px">Konsultācijas — atrodi savu skolotāju</h1>
     <div style="margin-left:auto; display:flex; gap:8px;">
       <button class="ghost">Reģistrēties</button>
       <button class="primary">Pieteikties</button>
@@ -71,6 +75,40 @@
           <option value="5">5+</option>
         </select>
       </label>
+      
+      <h4 style="margin-top:18px">Pieejamība</h4>
+      <label class="meta">Diena
+        <select id="fDay" style="width:100%;padding:8px;margin-top:6px;border-radius:6px;">
+          <option value="">Visas</option>
+          <option>Pirmdiena</option>
+          <option>Otrdiena</option>
+          <option>Trešdiena</option>
+          <option>Ceturtdiena</option>
+          <option>Piektdiena</option>
+          <option>Sestdiena</option>
+          <option>Svētdiena</option>
+        </select>
+      </label>
+
+      <label class="meta" style="margin-top:10px;">Laiks (stundā)
+        <select id="fHour" style="width:100%;padding:8px;margin-top:6px;border-radius:6px;">
+          <option value="">—</option>
+          <!-- stundas no 8:00 līdz 20:00 -->
+          <option value="8">08:00</option>
+          <option value="9">09:00</option>
+          <option value="10">10:00</option>
+          <option value="11">11:00</option>
+          <option value="12">12:00</option>
+          <option value="13">13:00</option>
+          <option value="14">14:00</option>
+          <option value="15">15:00</option>
+          <option value="16">16:00</option>
+          <option value="17">17:00</option>
+          <option value="18">18:00</option>
+          <option value="19">19:00</option>
+          <option value="20">20:00</option>
+        </select>
+      </label>
     </aside>
 
     <section class="results">
@@ -91,10 +129,12 @@
 
   <script>
     // Vienkāršs statisks piemērs — aizstāj ar reālu API
+    // Pievienots lauks `page` ar attiecīgajām lokālajām profila lapām un `availability` saraksts
+    // availability ir masīvs ar ierakstiem {day: 'Pirmdiena', hour: 10}
     const demo = [
-      {name:'Inese B.', subj:'Matemātika', price:25, exp:8, remote:true, place:'Rīga'},
-      {name:'Jānis K.', subj:'Angļu valoda', price:18, exp:4, remote:true, place:'Jelgava'},
-      {name:'Maija P.', subj:'Latviešu valoda', price:15, exp:6, remote:false, place:'Rīga'}
+      {name:'Inese B.', subj:'Matemātika', price:25, exp:8, remote:true, place:'Rīga', page:'kon_inese_b.html', availability:[{day:'Pirmdiena',hour:10},{day:'Trešdiena',hour:14},{day:'Piektdiena',hour:9}]},
+  {name:'Jānis K.', subj:'Angļu valoda', price:18, exp:4, remote:true, place:'Jelgava', page:'kon_janis_k.html', availability:[{day:'Otrdiena',hour:16},{day:'Ceturtdiena',hour:11},{day:'Piektdiena',hour:14}]},
+      {name:'Maija P.', subj:'Latviešu valoda', price:15, exp:6, remote:false, place:'Rīga', page:'kon_Maija_P.html', availability:[{day:'Pirmdiena',hour:8},{day:'Trešdiena',hour:10},{day:'Ceturtdiena',hour:15}]}
     ];
     const list = document.getElementById('list');
 
@@ -102,14 +142,17 @@
       list.innerHTML = '';
       data.forEach(t=>{
         const el = document.createElement('div'); el.className='card';
+        // render availability as compact string
+        const avail = (t.availability || []).map(a=>`${a.day} ${String(a.hour).padStart(2,'0')}:00`).join(', ');
         el.innerHTML = `<div class="avatar">${t.name.split(' ')[0][0]||'S'}</div>
           <div>
             <div style="font-weight:600">${t.name}</div>
             <div class="meta">${t.subj} · ${t.exp} gadi · ${t.place}</div>
             <div style="margin-top:8px;color:#333">Cena (maks): €${t.price}/st</div>
+            <div class="meta" style="margin-top:6px;color:#555">Pieejamība: ${avail || '—'}</div>
           </div>
           <div class="actions">
-            <button class="primary" onclick="openProfile('${t.name}')">Skatīt / Rezervēt</button>
+            <button class="primary" onclick="openProfile('${t.page}')">Skatīt / Rezervēt</button>
             <button class="ghost" onclick="contact('${t.name}')">Sūtīt ziņu</button>
           </div>`;
         list.appendChild(el);
@@ -122,6 +165,8 @@
       const remote = document.getElementById('fRemote').checked;
       const inPerson = document.getElementById('fInperson').checked;
       const experience = document.getElementById('fExp').value;
+      const day = document.getElementById('fDay').value;
+      const hour = document.getElementById('fHour').value; // string of number, e.g. '14'
 
       const filtered = demo.filter(t => {
         const subjectMatch = subject ? t.subj === subject : true;
@@ -130,13 +175,30 @@
         const inPersonMatch = inPerson ? !t.remote : true;
         const experienceMatch = experience ? t.exp >= experience : true;
 
-        return subjectMatch && priceMatch && remoteMatch && inPersonMatch && experienceMatch;
+        // availability: if day and/or hour is selected, ensure the teacher has an availability entry matching
+        let availabilityMatch = true;
+        if (day) {
+          if (!t.availability) availabilityMatch = false;
+          else {
+            availabilityMatch = t.availability.some(a => a.day === day && (hour ? String(a.hour) === String(hour) : true));
+          }
+        } else if (hour) {
+          // day not selected but hour selected -> match any day with that hour
+          if (!t.availability) availabilityMatch = false;
+          else availabilityMatch = t.availability.some(a => String(a.hour) === String(hour));
+        }
+
+        return subjectMatch && priceMatch && remoteMatch && inPersonMatch && experienceMatch && availabilityMatch;
       });
 
       render(filtered);
     }
 
-    function openProfile(name){ alert('Atvērt profilu: '+name); }
+    function openProfile(page){
+      // Pāradresē uz lokālo profila lapu
+      if (!page) { alert('Nav definēta profila lapa'); return; }
+      window.location.href = page;
+    }
     function contact(name){ alert('Sūtīt ziņu skolotājam: '+name); }
     render(demo);
 
@@ -150,19 +212,24 @@
     document.getElementById('fSubject').addEventListener('change', filterData);
     document.getElementById('fRemote').addEventListener('change', filterData);
     document.getElementById('fInperson').addEventListener('change', filterData);
-    document.getElementById('fExp').addEventListener('change', filterData);
+  document.getElementById('fExp').addEventListener('change', filterData);
+  // Reaģē arī uz dienas un laika izvēli
+  document.getElementById('fDay').addEventListener('change', filterData);
+  document.getElementById('fHour').addEventListener('change', filterData);
     document.getElementById('q').addEventListener('input', e=>{
       const q = e.target.value.toLowerCase();
       const filtered = demo.filter(d => (d.name + d.subj).toLowerCase().includes(q));
       render(filtered);
     });
-    document.getElementById('clear').addEventListener('click', ()=>{
+      document.getElementById('clear').addEventListener('click', ()=>{
       document.getElementById('q').value='';
       document.getElementById('fSubject').value = '';
       document.getElementById('fPrice').value = 50;
       document.getElementById('fRemote').checked = false;
       document.getElementById('fInperson').checked = false;
       document.getElementById('fExp').value = '';
+      document.getElementById('fDay').value = '';
+      document.getElementById('fHour').value = '';
       document.getElementById('currentPrice').innerText = '50'; // Atjaunina cenas attēlošanu
       render(demo);
     });
