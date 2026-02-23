@@ -2,15 +2,15 @@
 <html lang="lv">
 <head>
   <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Konsultācijas — MVP prototips</title>
   <style>
     :root{ --gap:12px; --accent:#2563eb; }
     body{ margin:0; font-family:system-ui,Segoe UI,Roboto,Arial; background:#f5f7fb; }
     header{ background:white; padding:16px 24px; display:flex; align-items:center; gap:12px; box-shadow:0 1px 0 rgba(0,0,0,0.06); }
-    main{ display:flex; gap:16px; padding:18px; }
+    main{ display:flex; gap:16px; padding:18px; flex-wrap: wrap; }
     .filters{ width:280px; background:white; padding:12px; border-radius:8px; box-shadow:0 6px 18px rgba(2,6,23,0.06); height:calc(100vh - 100px); overflow:auto; }
-    .results{ flex:1; }
+    .results{ flex:1; min-width:300px; }
     .toolbar{ display:flex; gap:12px; align-items:center; margin-bottom:12px; }
     .search{ flex:1; padding:8px 12px; border-radius:8px; border:1px solid #e6eefc; }
     .card{ background:white; padding:12px; border-radius:8px; margin-bottom:12px; display:flex; gap:12px; align-items:flex-start; box-shadow:0 2px 8px rgba(2,6,23,0.04); }
@@ -20,6 +20,15 @@
     button.primary{ background:var(--accent); color:white; border:none; padding:8px 12px; border-radius:8px; cursor:pointer; }
     button.ghost{ background:transparent; border:1px solid #e6eefc; padding:6px 8px; border-radius:6px; cursor:pointer; }
     footer{ padding:12px; text-align:center; color:#777; font-size:13px; }
+
+    /* Responsīvie stili */
+    @media (max-width: 768px) {
+      main { flex-direction: column; }
+      .filters { width: 100%; height: auto; }
+      .results { width: 100%; }
+      .card { flex-direction: column; }
+      .actions { margin-left: 0; }
+    }
   </style>
 </head>
 <body>
@@ -43,8 +52,9 @@
         </select>
       </label>
 
-      <label class="meta" style="margin-top:10px;">Cena (maks)</label>
-      <input type="range" id="fPrice" min="0" max="100" value="50" style="width:100%">
+      <label class="meta" style="margin-top:10px;">Cena (maks): <span id="currentPrice">50</span> €/st</label>
+      <input type="range" id="fPrice" min="1" max="100" value="50" style="width:100%">
+      <div id="priceDisplay" style="margin-top:6px;"></div>
 
       <label class="meta" style="margin-top:10px;">Konsultācijas veids</label>
       <div style="display:flex;gap:8px;margin-top:6px;">
@@ -87,6 +97,7 @@
       {name:'Maija P.', subj:'Latviešu valoda', price:15, exp:6, remote:false, place:'Rīga'}
     ];
     const list = document.getElementById('list');
+
     function render(data){
       list.innerHTML = '';
       data.forEach(t=>{
@@ -95,26 +106,65 @@
           <div>
             <div style="font-weight:600">${t.name}</div>
             <div class="meta">${t.subj} · ${t.exp} gadi · ${t.place}</div>
-            <div style="margin-top:8px;color:#333">Cena: €${t.price}/st</div>
+            <div style="margin-top:8px;color:#333">Cena (maks): €${t.price}/st</div>
           </div>
           <div class="actions">
             <button class="primary" onclick="openProfile('${t.name}')">Skatīt / Rezervēt</button>
-            <button class="ghost" onclick="contact('${t.name}')">Ziņot</button>
+            <button class="ghost" onclick="contact('${t.name}')">Sūtīt ziņu</button>
           </div>`;
         list.appendChild(el);
       });
     }
+
+    function filterData() {
+      const subject = document.getElementById('fSubject').value;
+      const maxPrice = document.getElementById('fPrice').value;
+      const remote = document.getElementById('fRemote').checked;
+      const inPerson = document.getElementById('fInperson').checked;
+      const experience = document.getElementById('fExp').value;
+
+      const filtered = demo.filter(t => {
+        const subjectMatch = subject ? t.subj === subject : true;
+        const priceMatch = t.price <= maxPrice;
+        const remoteMatch = remote ? t.remote : true;
+        const inPersonMatch = inPerson ? !t.remote : true;
+        const experienceMatch = experience ? t.exp >= experience : true;
+
+        return subjectMatch && priceMatch && remoteMatch && inPersonMatch && experienceMatch;
+      });
+
+      render(filtered);
+    }
+
     function openProfile(name){ alert('Atvērt profilu: '+name); }
     function contact(name){ alert('Sūtīt ziņu skolotājam: '+name); }
     render(demo);
 
-    // filtri — pamata
+    // Atjaunina cenas attēlošanu
+    document.getElementById('fPrice').addEventListener('input', (e) => {
+      document.getElementById('currentPrice').innerText = e.target.value;
+      filterData();
+    });
+
+    // Filtri — pamata
+    document.getElementById('fSubject').addEventListener('change', filterData);
+    document.getElementById('fRemote').addEventListener('change', filterData);
+    document.getElementById('fInperson').addEventListener('change', filterData);
+    document.getElementById('fExp').addEventListener('change', filterData);
     document.getElementById('q').addEventListener('input', e=>{
       const q = e.target.value.toLowerCase();
-      render(demo.filter(d=> (d.name+d.subj).toLowerCase().includes(q)));
+      const filtered = demo.filter(d => (d.name + d.subj).toLowerCase().includes(q));
+      render(filtered);
     });
     document.getElementById('clear').addEventListener('click', ()=>{
-      document.getElementById('q').value=''; render(demo);
+      document.getElementById('q').value='';
+      document.getElementById('fSubject').value = '';
+      document.getElementById('fPrice').value = 50;
+      document.getElementById('fRemote').checked = false;
+      document.getElementById('fInperson').checked = false;
+      document.getElementById('fExp').value = '';
+      document.getElementById('currentPrice').innerText = '50'; // Atjaunina cenas attēlošanu
+      render(demo);
     });
   </script>
 </body>
